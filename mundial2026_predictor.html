@@ -629,7 +629,7 @@ async function fetchResults(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 16:17 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · actualizado 13 Jun`);
 }
 
 const CORS_PROXIES=[
@@ -1110,9 +1110,9 @@ function updateAccBar(pct){
 function normName(n){if(!n)return'';return NAME_MAP[n]||NAME_MAP[n.trim()]||null;}
 function setChip(id,state,txt){
   const el=document.getElementById('chip-'+id);
+  if(!el)return;
   el.className='api-chip '+(state==='ok'?'ok':state==='err'?'err':'loading');
-  el.innerHTML=(state==='loading'?'<div class="spin"></div>':'')+`<span>${txt}</span>`;
-  document.getElementById('txt-'+id).textContent=txt;
+  el.innerHTML=(state==='loading'?'<div class="spin"></div>':'')+`<span id="txt-${id}">${txt}</span>`;
 }
 function initStandings(){
   standings={};
@@ -1328,168 +1328,41 @@ function renderManualSquads(nA,nB,confirmed){
   const sqA=squadsData.find(t=>NAME_MAP[t.name]===nA||t.name===nA);
   const sqB=squadsData.find(t=>NAME_MAP[t.name]===nB||t.name===nB);
 
-// ═══ SMART AUTO-SELECTION: Probable Starting XI ═══
-// Logic: jersey number + position balance + age/experience + injury filter
-// Default formations per confederation
-const DEFAULT_FORMATIONS = {
-  // {GK, DF, MF, FW} counts
-  "UEFA":     {GK:1,DF:4,MF:3,FW:3}, // 4-3-3
-  "CONMEBOL": {GK:1,DF:4,MF:3,FW:3}, // 4-3-3
-  "CONCACAF": {GK:1,DF:4,MF:4,FW:2}, // 4-4-2
-  "AFC":      {GK:1,DF:4,MF:4,FW:2}, // 4-4-2
-  "CAF":      {GK:1,DF:4,MF:3,FW:3}, // 4-2-3-1 -> 4-3-3
-  "OFC":      {GK:1,DF:5,MF:3,FW:2}, // 5-3-2 defensive
-};
-// Team-specific formation overrides (known from qualifiers)
-const TEAM_FORMATIONS = {
-  "España":        {GK:1,DF:4,MF:3,FW:3},
-  "Francia":       {GK:1,DF:4,MF:3,FW:3},
-  "Argentina":     {GK:1,DF:4,MF:4,FW:2},
-  "Brasil":        {GK:1,DF:4,MF:3,FW:3},
-  "Alemania":      {GK:1,DF:4,MF:4,FW:2},
-  "Inglaterra":    {GK:1,DF:4,MF:3,FW:3},
-  "Portugal":      {GK:1,DF:4,MF:3,FW:3},
-  "Países Bajos":  {GK:1,DF:4,MF:3,FW:3},
-  "Bélgica":       {GK:1,DF:4,MF:3,FW:3},
-  "Croacia":       {GK:1,DF:4,MF:4,FW:2},
-  "Italia":        {GK:1,DF:4,MF:3,FW:3},
-  "Uruguay":       {GK:1,DF:4,MF:4,FW:2},
-  "Colombia":      {GK:1,DF:4,MF:4,FW:2},
-  "México":        {GK:1,DF:4,MF:4,FW:2},
-  "USA":           {GK:1,DF:4,MF:3,FW:3},
-  "Marruecos":     {GK:1,DF:4,MF:3,FW:3},
-  "Japón":         {GK:1,DF:4,MF:3,FW:3},
-  "Corea del Sur": {GK:1,DF:4,MF:4,FW:2},
-  "Senegal":       {GK:1,DF:4,MF:3,FW:3},
-  "Suiza":         {GK:1,DF:4,MF:3,FW:3},
-  "Noruega":       {GK:1,DF:4,MF:3,FW:3},
-  "Ecuador":       {GK:1,DF:5,MF:3,FW:2},
-  "Australia":     {GK:1,DF:4,MF:4,FW:2},
-  "Turquía":       {GK:1,DF:4,MF:3,FW:3},
-};
-
-function getProbableXI(sq, teamName) {
-  // Get formation for this team
-  const td = TD_BASE[teamName]||{};
-  const conf = td.conf||'UEFA';
-  const form = TEAM_FORMATIONS[teamName] || DEFAULT_FORMATIONS[conf] || {GK:1,DF:4,MF:3,FW:3};
-
-  const byPos = {GK:[],DF:[],MF:[],FW:[]};
-  (sq.players||[]).forEach(p => {
-    if(byPos[p.pos]) byPos[p.pos].push(p);
-  });
-
-  // Score each player — higher = more likely starter
-  function scorePlayer(p, pos) {
-    let score = 100;
-    // 1. Jersey number heuristic: 1-11 = likely starters historically
-    //    But modern football assigns by preference, not position
-    //    Low numbers still correlate with starter status
-    if(p.number <= 11) score += (12 - p.number) * 4; // #1=+44, #11=+4
-    else if(p.number <= 15) score += 5;
-    else score -= (p.number - 15) * 2; // penalize high numbers
-
-    // 2. Experience via age: peak 24-32 years old
-    if(p.date_of_birth) {
-      const age = calcAgeNum(p.date_of_birth);
-      if(age >= 24 && age <= 32) score += 20;
-      else if(age >= 22 && age < 24) score += 10;
-      else if(age >= 32 && age <= 36) score += 5;
-      else if(age < 22) score += 2; // young talent, less certain starter
-      else score -= 5; // 36+
-    }
-
-    // 3. Injury penalty: baja = -1000 (never start), duda = -30
-    const injStatus = isInjured(teamName, p.name);
-    if(injStatus === 'baja') score -= 1000;
-    else if(injStatus === 'duda') score -= 30;
-
-    return score;
-  }
-
-  // For each position slot in formation, pick top scorers
-  const selected = new Set();
-
-  ['GK','DF','MF','FW'].forEach(pos => {
-    const needed = form[pos] || 0;
-    const candidates = [...byPos[pos]].sort((a,b) => scorePlayer(b,pos) - scorePlayer(a,pos));
-    candidates.slice(0, needed).forEach(p => {
-      if(scorePlayer(p, pos) > 0) selected.add(p.number); // don't add confirmed baja
-    });
-  });
-
-  // If we ended up with <11 (e.g. injuries depleted a line), fill from remaining
-  if(selected.size < 11) {
-    const all = (sq.players||[])
-      .filter(p => !selected.has(p.number))
-      .sort((a,b) => scorePlayer(b,b.pos) - scorePlayer(a,a.pos));
-    for(const p of all) {
-      if(selected.size >= 11) break;
-      if(scorePlayer(p,p.pos) > 0) selected.add(p.number);
-    }
-  }
-
-  return selected;
-}
-
-function calcAgeNum(dob) {
-  if(!dob) return 28;
-  const d = new Date(dob), now = new Date('2026-06-11');
-  return Math.floor((now-d)/(365.25*24*3600*1000));
-}
-
-// Known probable starters for key positions (overrides for star players)
-// These ensure Messi, Mbappé, Ronaldo etc are always auto-selected
-const KNOWN_STARTERS = {
-  "Argentina":  [10,1,13,19,6,14,11,22,7,23,9],  // Messi #10
-  "Francia":    [10,1,5,21,4,8,14,7,11,9,6],      // Mbappé #10
-  "Brasil":     [7,1,5,14,15,8,20,22,11,9,10],    // Vinícius #7
-  "España":     [10,1,3,5,17,6,8,11,21,7,9],      // Pedri/Yamal
-  "Portugal":   [7,1,2,4,5,6,8,11,17,10,9],       // Ronaldo #7
-  "Alemania":   [10,1,2,3,4,6,7,8,9,13,21],       // Wirtz #10
-  "Inglaterra": [10,1,2,5,6,4,8,7,11,9,19],       // Bellingham #10
-  "Argentina":  [10,1,13,19,6,14,11,22,7,23,9],
-};
-
+  const mkTeamCard=(sq,name,flag,side,confirmedPlayers)=>{
     if(!sq)return`<div class="lu-team"><div class="lu-hdr">${flag} ${name}</div><p style="font-size:11px;color:var(--mut)">Plantilla no disponible</p></div>`;
     const byPos={GK:[],DF:[],MF:[],FW:[]};
     (sq.players||[]).forEach(p=>byPos[p.pos]?.push(p));
     const posClass={GK:'lp-gk',DF:'lp-df',MF:'lp-mf',FW:'lp-fw'};
     const posLabel={GK:'Porteros',DF:'Defensas',MF:'Mediocampistas',FW:'Delanteros'};
-
-    // Smart auto-selection: confirmed > known starters > algorithm
     let autoSelected, sourceLabel, sourceColor;
     if(confirmedPlayers && confirmedPlayers.length){
-      autoSelected = new Set(confirmedPlayers.map(p=>p.number||p.num));
-      sourceLabel='✓ Alineación confirmada'; sourceColor='var(--grn)';
+      autoSelected=new Set(confirmedPlayers.map(p=>p.number||p.num));
+      sourceLabel='✓ Confirmada'; sourceColor='var(--grn)';
     } else if(KNOWN_STARTERS[name]){
-      autoSelected = new Set(KNOWN_STARTERS[name]);
-      sourceLabel='⭐ XI probable conocido'; sourceColor='var(--ylw)';
+      autoSelected=new Set(KNOWN_STARTERS[name]);
+      sourceLabel='⭐ XI probable'; sourceColor='var(--ylw)';
     } else {
-      autoSelected = getProbableXI(sq, name);
-      sourceLabel='🤖 XI auto-calculado'; sourceColor='var(--acc)';
+      autoSelected=getProbableXI(sq,name);
+      sourceLabel='🤖 Auto-calculado'; sourceColor='var(--acc)';
     }
-    manualSelections[side] = new Set(autoSelected);
-
+    manualSelections[side]=new Set(autoSelected);
     let rows='';
     ['GK','DF','MF','FW'].forEach(pos=>{
-      if(!byPos[pos].length)return;
+      if(!byPos[pos]||!byPos[pos].length)return;
       rows+=`<div class="lu-subs-lbl" style="margin-top:6px">${posLabel[pos]}</div>`;
       byPos[pos].forEach(p=>{
         const injStatus=isInjured(name,p.name);
         const isSelected=autoSelected.has(p.number);
         const isBaja=injStatus==='baja';
-        const selStyle=isSelected?`background:rgba(34,197,94,.15);border-color:var(--grn);`:'';
+        const selStyle=isSelected?'background:rgba(34,197,94,.15);border-color:var(--grn);':'';
         const strikeStyle=isBaja?'text-decoration:line-through;opacity:.5;':'';
         const injBadge=injStatus?`<span style="font-size:9px;color:${injStatus==='baja'?'var(--red)':'var(--ylw)'};margin-left:3px">${injStatus==='baja'?'❌':'⚠'}</span>`:'';
-        const selectedBadge=isSelected?`<span style="font-size:9px;color:var(--grn);margin-left:auto;font-weight:700">✓ TIT</span>`:'<span style="font-size:9px;color:var(--mut);margin-left:auto">SUP</span>';
-        rows+=`<div class="lu-player" id="lp-${side}-${p.number}"
-          onclick="togglePlayer('${side}',${p.number},'${name}')"
-          style="cursor:pointer;border-radius:4px;padding:4px 6px;border:1px solid var(--brd);margin-bottom:2px;transition:all .15s;${selStyle}${isBaja?'opacity:.5;cursor:not-allowed;':''}">
+        const selBadge=isSelected?`<span style="font-size:9px;color:var(--grn);margin-left:auto;font-weight:700">✓ TIT</span>`:'<span style="font-size:9px;color:var(--mut);margin-left:auto">SUP</span>';
+        rows+=`<div class="lu-player" id="lp-${side}-${p.number}" onclick="togglePlayer('${side}',${p.number},'${name}')" style="cursor:pointer;border-radius:4px;padding:4px 6px;border:1px solid var(--brd);margin-bottom:2px;transition:all .15s;${selStyle}${isBaja?'opacity:.5;cursor:not-allowed;':''}">
           <span class="lu-num">${p.number}</span>
           <span class="lu-pos ${posClass[pos]}">${pos}</span>
           <span style="${strikeStyle}">${p.name}${injBadge}</span>
-          ${selectedBadge}
+          ${selBadge}
         </div>`;
       });
     });
@@ -1603,83 +1476,68 @@ function applyManualLineup(){
 
 // ═══ INIT ═══
 function init(){
-  // ── 1. Populate all selectors IMMEDIATELY from local data (no fetch needed) ──
   const names=Object.keys(TD_BASE).sort((a,b)=>{
     const ga=TD_BASE[a].grp,gb=TD_BASE[b].grp;
     return ga===gb?a.localeCompare(b):ga.localeCompare(gb);
   });
 
-  // Predictor selectors (sA, sB)
-  const sA=document.getElementById('sA'),sB=document.getElementById('sB');
-  let html_sA='',html_sB='',lastGrp='';
+  // Build option HTML for all selectors
+  let grpHtml={};
+  let lastGrp='', allHtml='';
   names.forEach(n=>{
     const t=TD_BASE[n];
     if(t.grp!==lastGrp){
-      if(lastGrp){html_sA+='</optgroup>';html_sB+='</optgroup>';}
-      html_sA+=`<optgroup label="— Grupo ${t.grp} —">`;
-      html_sB+=`<optgroup label="— Grupo ${t.grp} —">`;
+      if(lastGrp) allHtml+='</optgroup>';
+      allHtml+=`<optgroup label="Grupo ${t.grp}">`;
       lastGrp=t.grp;
     }
-    const o=`<option value="${n}">${t.flag} ${n}</option>`;
-    html_sA+=o; html_sB+=o;
+    allHtml+=`<option value="${n}">${t.flag||''} ${n}</option>`;
   });
-  html_sA+='</optgroup>'; html_sB+='</optgroup>';
-  sA.innerHTML=html_sA; sB.innerHTML=html_sB;
-  sB.value='Francia';
+  allHtml+='</optgroup>';
 
-  // Squad + lineup selectors
-  const squadSel=document.getElementById('squadTeamSel');
-  const linA=document.getElementById('linTeamA');
-  const linB=document.getElementById('linTeamB');
-  let squadHtml='',linAHtml='',linBHtml='',lastSqGrp='';
-  names.forEach(n=>{
-    const t=TD_BASE[n];
-    if(t.grp!==lastSqGrp){
-      if(lastSqGrp){squadHtml+='</optgroup>';linAHtml+='</optgroup>';linBHtml+='</optgroup>';}
-      squadHtml+=`<optgroup label="Grupo ${t.grp}">`;
-      linAHtml+=`<optgroup label="Grupo ${t.grp}">`;
-      linBHtml+=`<optgroup label="Grupo ${t.grp}">`;
-      lastSqGrp=t.grp;
-    }
-    const o=`<option value="${n}">${t.flag} ${n}</option>`;
-    squadHtml+=o; linAHtml+=o; linBHtml+=o;
+  // Fill every select safely
+  ['sA','sB','squadTeamSel','linTeamA','linTeamB'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=allHtml;
   });
-  squadHtml+='</optgroup>'; linAHtml+='</optgroup>'; linBHtml+='</optgroup>';
-  squadSel.innerHTML=squadHtml;
-  linA.innerHTML=linAHtml;
-  linB.innerHTML=linBHtml;
-  linB.value='Francia';
 
-  // ── 2. UI event listeners ──
-  document.getElementById('useOdds').addEventListener('change',function(){
-    document.getElementById('oddsInput').classList.toggle('on',this.checked);
+  // Set default value for B selectors
+  ['sB','linTeamB'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='Francia';
   });
-  document.getElementById('oddsInput').classList.add('on');
+
+  // Event listeners — defensive
+  const useOdds=document.getElementById('useOdds');
+  const oddsInput=document.getElementById('oddsInput');
+  if(useOdds&&oddsInput){
+    useOdds.addEventListener('change',function(){ oddsInput.classList.toggle('on',this.checked); });
+    oddsInput.classList.add('on');
+  }
 
   document.querySelectorAll('.chip').forEach(c=>{
     c.addEventListener('click',function(){
       const radio=this.querySelector('input[type=radio]');
       if(radio){document.querySelectorAll('#c-n,#c-h').forEach(x=>x.classList.remove('on'));this.classList.add('on');}
-      const cb=this.querySelector('input[type=checkbox]');if(cb)this.classList.toggle('on');
+      const cb=this.querySelector('input[type=checkbox]');
+      if(cb)this.classList.toggle('on');
     });
   });
 
-  // ── 3. Restore saved keys ──
+  // Keys
   const savedOddsKey=localStorage.getItem('oddsApiKey');
-  if(savedOddsKey)setChip('odds','ok','✓ Odds API key guardada');
+  if(savedOddsKey) setChip('odds','ok','✓ Odds API key guardada');
   else setChip('odds','err','Sin odds API key — usar odds manuales');
 
-  // ── 4. Init standings and apply embedded data immediately ──
+  // Apply embedded data
   initStandings();
   updateAccBar(62);
-
-  // ── 5. Data is embedded — everything is synchronous, no network needed ──
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 16:17 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun`);
 }
-init();
+try{ init(); } catch(e){ console.error('Init error:',e); document.getElementById('chip-results').innerHTML='<span style="color:var(--red)">⚠ Error: '+e.message+'</span>'; }
 </script>
 </body>
 </html>
