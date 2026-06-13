@@ -627,7 +627,7 @@ async function fetchResults(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · actualizado 12 Jun`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 16:11 UTC`);
 }
 
 const CORS_PROXIES=[
@@ -1673,7 +1673,7 @@ function init(){
 
   // ── 5. Apply embedded data immediately — no network needed ──
   fetchResults();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) integrado(s)`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 16:11 UTC`);
 }
 init();
 </script>
