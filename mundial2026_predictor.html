@@ -282,11 +282,11 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
   </div>
 
   <div class="api-row">
-    <div class="api-chip loading" id="chip-results">
-      <div class="spin"></div><span id="txt-results">Cargando resultados...</span>
+    <div class="api-chip" id="chip-results">
+      <span id="txt-results">Inicializando...</span>
     </div>
-    <div class="api-chip loading" id="chip-odds">
-      <div class="spin"></div><span id="txt-odds">Cargando odds...</span>
+    <div class="api-chip err" id="chip-odds">
+      <span id="txt-odds">Sin odds API key — usar odds manuales</span>
     </div>
   </div>
 
@@ -623,11 +623,13 @@ let apiOk=true;
 let liveMatches=[{"home":"México","away":"Sudáfrica","gH":2,"gA":0,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Corea del Sur","away":"Czechia","gH":2,"gA":1,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Canadá","away":"Bosnia-Herzegovina","gH":1,"gA":1,"grp":"B","date":"2026-06-12","round":"Matchday 2"},{"home":"USA","away":"Paraguay","gH":4,"gA":1,"grp":"D","date":"2026-06-12","round":"Matchday 2"}];
 
 // Función vacía — datos ya embebidos, no necesita fetch
+// fetchResults is kept for the GitHub Actions workflow (update_data.py calls it indirectly)
+// In the browser, data is already embedded — applyResults() is called directly from init()
 async function fetchResults(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 16:11 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · actualizado 13 Jun`);
 }
 
 const CORS_PROXIES=[
@@ -1667,13 +1669,15 @@ function init(){
   if(savedOddsKey)setChip('odds','ok','✓ Odds API key guardada');
   else setChip('odds','err','Sin odds API key — usar odds manuales');
 
-  // ── 4. Init standings with base data immediately ──
+  // ── 4. Init standings and apply embedded data immediately ──
   initStandings();
   updateAccBar(62);
 
-  // ── 5. Apply embedded data immediately — no network needed ──
-  fetchResults();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 16:11 UTC`);
+  // ── 5. Data is embedded — everything is synchronous, no network needed ──
+  applyResults();
+  renderGroups();
+  renderResultsList();
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · actualizado 13 Jun`);
 }
 init();
 </script>
