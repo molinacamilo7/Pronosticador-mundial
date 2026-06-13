@@ -1,0 +1,35 @@
+name: Actualizar resultados Mundial 2026
+
+on:
+  schedule:
+    # Corre cada hora durante el Mundial (Jun 11 - Jul 19 2026)
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    # También permite correrlo manualmente desde GitHub
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Actualizar datos del Mundial
+        run: python update_data.py
+
+      - name: Commit y push si hay cambios
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add mundial2026_predictor.html
+          # Solo hace commit si el HTML cambió (nuevos resultados)
+          git diff --cached --quiet || git commit -m "🤖 Auto-update: resultados $(date +'%Y-%m-%d %H:%M UTC')"
+          git push
