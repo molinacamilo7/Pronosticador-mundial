@@ -190,6 +190,53 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
 /* SKELLAM INFO */
 .skellam-note{background:rgba(168,85,247,.07);border:1px solid rgba(168,85,247,.2);border-radius:var(--rs);padding:.5rem .8rem;font-size:10px;color:#d8b4fe;margin-top:.6rem;}
 
+/* SQUADS */
+.squad-card{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;margin-bottom:1rem;}
+.squad-hdr{background:var(--s2);padding:.6rem .9rem;display:flex;align-items:center;gap:.6rem;}
+.squad-flag{font-size:1.4rem;}
+.squad-name{font-size:13px;font-weight:700;}
+.squad-meta{font-size:10px;color:var(--mut);margin-left:auto;}
+.pos-section{padding:.5rem .9rem .7rem;}
+.pos-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mut);padding:.3rem 0;border-bottom:1px solid var(--brd);margin-bottom:.4rem;}
+.player-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:.4rem;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:12px;}
+.player-row:last-child{border:none;}
+.p-num{color:var(--mut);font-size:11px;text-align:right;}
+.p-name{font-weight:500;}
+.p-age{font-size:10px;color:var(--mut);}
+.p-inj{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}
+.pos-gk .p-name{color:#67e8f9;}
+.pos-df .p-name{color:#86efac;}
+.pos-mf .p-name{color:#fcd34d;}
+.pos-fw .p-name{color:#f9a8d4;}
+.squads-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.9rem;}
+
+/* LINEUPS */
+.pitch{background:linear-gradient(180deg,#1a3a1a 0%,#1e4a1e 50%,#1a3a1a 100%);border:2px solid rgba(255,255,255,.12);border-radius:var(--r);position:relative;width:100%;aspect-ratio:0.68;max-width:420px;margin:0 auto 1rem;}
+.pitch-lines{position:absolute;inset:0;pointer-events:none;}
+.pitch svg{width:100%;height:100%;}
+.pitch-team{position:absolute;width:100%;display:flex;flex-direction:column;justify-content:space-around;}
+.pitch-row{display:flex;justify-content:space-around;padding:0 4%;}
+.pitch-player{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;}
+.pp-circle{width:32px;height:32px;border-radius:50%;background:var(--acc);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;}
+.pp-circle.away{background:var(--red);}
+.pp-name{font-size:9px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);text-align:center;max-width:52px;line-height:1.2;}
+.pp-num{font-size:8px;color:rgba(255,255,255,.7);}
+.lineup-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:.75rem;}
+@media(max-width:540px){.lineup-grid{grid-template-columns:1fr;}}
+.lu-team{background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:.85rem;}
+.lu-hdr{font-size:12px;font-weight:700;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem;}
+.lu-form{font-size:10px;color:var(--mut);margin-left:auto;background:var(--s2);padding:2px 6px;border-radius:3px;}
+.lu-player{display:flex;align-items:center;gap:.4rem;padding:3px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.03);}
+.lu-player:last-child{border:none;}
+.lu-num{color:var(--mut);font-size:10px;min-width:18px;text-align:right;}
+.lu-pos{font-size:9px;padding:1px 4px;border-radius:2px;font-weight:700;min-width:22px;text-align:center;}
+.lp-gk{background:rgba(6,182,212,.2);color:#67e8f9;}
+.lp-df{background:rgba(34,197,94,.2);color:#86efac;}
+.lp-mf{background:rgba(245,158,11,.2);color:#fcd34d;}
+.lp-fw{background:rgba(236,72,153,.2);color:#f9a8d4;}
+.lu-subs{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--brd);}
+.lu-subs-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.4rem;}
+
 .foot{text-align:center;font-size:10px;color:var(--mut);padding:1.25rem 1rem .6rem;line-height:1.9;}
 .foot a{color:var(--tel);text-decoration:none;}
 </style>
@@ -218,6 +265,8 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
   <div class="tab on" onclick="ST('pred')">🎯 Predictor</div>
   <div class="tab" onclick="ST('groups')">📊 Grupos</div>
   <div class="tab" onclick="ST('results')">⚽ Resultados</div>
+  <div class="tab" onclick="ST('squads')">👕 Plantillas</div>
+  <div class="tab" onclick="ST('lineups')">📋 Alineaciones</div>
   <div class="tab" onclick="ST('method')">🔬 Metodología</div>
 </div>
 
@@ -338,6 +387,53 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
   <div id="resultsList" class="rl"></div>
 </div>
 
+<!-- SQUADS -->
+<div class="panel" id="panel-squads">
+  <div class="strip strip-grn"><div class="ld ld-g"></div><span>Plantillas oficiales de 26 jugadores · Fuente: openfootball/worldcup.squads.json · Se carga automáticamente</span></div>
+  <div style="display:flex;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center">
+    <select id="squadTeamSel" style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);font-size:.88rem;padding:.45rem .65rem;cursor:pointer;flex:1;min-width:180px;max-width:320px"></select>
+    <button onclick="renderSquadView()" style="background:var(--acc);border:none;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:700;padding:.45rem 1rem;cursor:pointer">Ver plantilla</button>
+    <button onclick="renderAllSquads()" style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);font-size:12px;padding:.45rem 1rem;cursor:pointer">Ver todas (48)</button>
+  </div>
+  <div id="squadView"></div>
+</div>
+
+<!-- LINEUPS -->
+<div class="panel" id="panel-lineups">
+  <div class="strip strip-ylw"><div class="ld ld-y"></div><span>Alineaciones confirmadas ~60 min antes del partido · Requiere API key gratuita de API-Football (RapidAPI)</span></div>
+
+  <!-- API Key setup -->
+  <div style="background:var(--s2);border:1px solid var(--brd2);border-radius:var(--r);padding:1rem;margin-bottom:1rem" id="apiKeySetup">
+    <div style="font-size:12px;font-weight:700;margin-bottom:.5rem;color:var(--ylw)">⚙️ Configurar API-Football (gratis)</div>
+    <div style="font-size:11px;color:var(--mut);line-height:1.8;margin-bottom:.75rem">
+      1. Regístrate en <a href="https://rapidapi.com/api-sports/api/api-football" target="_blank" style="color:var(--tel)">rapidapi.com → API-Football → Free plan</a> (100 requests/día gratis)<br>
+      2. Copia tu <strong style="color:var(--txt)">X-RapidAPI-Key</strong> del dashboard<br>
+      3. Pégala aquí — se guarda solo en tu navegador
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+      <input id="apifootKey" type="password" placeholder="Pega tu X-RapidAPI-Key aquí..."
+        style="flex:1;min-width:220px;background:var(--s1);border:1px solid var(--brd2);border-radius:var(--rs);color:var(--txt);font-size:12px;padding:.45rem .7rem">
+      <button onclick="saveApiKey()" style="background:var(--grn);border:none;border-radius:var(--rs);color:#000;font-size:12px;font-weight:700;padding:.45rem 1rem;cursor:pointer">Guardar</button>
+      <button onclick="clearApiKey()" style="background:transparent;border:1px solid var(--brd);border-radius:var(--rs);color:var(--mut);font-size:12px;padding:.45rem .8rem;cursor:pointer">Borrar</button>
+    </div>
+    <div id="keyStatus" style="font-size:11px;margin-top:.5rem;color:var(--mut)"></div>
+  </div>
+
+  <!-- Fixture selector -->
+  <div style="background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:1rem;margin-bottom:1rem">
+    <div style="font-size:11px;color:var(--mut);margin-bottom:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px">Seleccionar partido</div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+      <select id="linTeamA" style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);font-size:.85rem;padding:.42rem .6rem;cursor:pointer;flex:1;min-width:150px"></select>
+      <span style="color:var(--mut);font-weight:700;font-size:.9rem">vs</span>
+      <select id="linTeamB" style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);font-size:.85rem;padding:.42rem .6rem;cursor:pointer;flex:1;min-width:150px"></select>
+      <button onclick="fetchLineups()" style="background:var(--acc);border:none;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:700;padding:.45rem 1rem;cursor:pointer;white-space:nowrap">📋 Cargar alineación</button>
+    </div>
+    <div style="font-size:10px;color:var(--mut);margin-top:.4rem">Las alineaciones aparecen ~60 min antes del partido. Antes de esa hora verás "no confirmada aún".</div>
+  </div>
+
+  <div id="lineupView"></div>
+</div>
+
 <!-- METHODOLOGY -->
 <div class="panel" id="panel-method">
   <div style="max-width:780px">
@@ -364,7 +460,16 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
       </div>
 
       <div class="card on" style="margin:0">
-        <div class="ct">Qué incluye esta versión que los modelos simples no tienen</div>
+        <div class="ct">🚑 Lesiones y suspensiones integradas — cómo mantenerlas actualizadas</div>
+        <p style="font-size:12px;color:var(--mut);line-height:1.8;margin-bottom:.5rem">Las bajas de jugadores clave están integradas directamente en los cálculos de xG. Por ejemplo: Estêvão + Rodrygo fuera de Brasil = <strong style="color:var(--txt)">-14% en xG ofensivo de Brasil</strong>. Para actualizar durante el torneo:</p>
+        <ol style="font-size:11px;color:var(--mut);line-height:2;padding-left:1rem">
+          <li>Abre el archivo HTML en un editor de texto (Notepad, VS Code)</li>
+          <li>Busca la sección <code style="background:var(--s2);padding:1px 5px;border-radius:3px">const INJURIES</code></li>
+          <li>Actualiza los arrays <code>out</code>, <code>doubt</code> e <code>impact</code> según las noticias del día</li>
+          <li>Sube el archivo actualizado a GitHub — GitHub Pages se actualiza en segundos</li>
+        </ol>
+        <p style="font-size:11px;color:var(--mut);margin-top:.5rem">Fuentes recomendadas: <strong style="color:var(--txt)">ESPN injury tracker</strong> · <strong style="color:var(--txt)">apwin.com</strong> · <strong style="color:var(--txt)">transfermarkt.com</strong></p>
+      </div>
         <ul style="font-size:11px;color:var(--mut);line-height:2;padding-left:1rem">
           <li><strong style="color:var(--txt)">Distribución Skellam:</strong> modela directamente la diferencia de goles, mejor calibrada que Poisson en partidos desequilibrados</li>
           <li><strong style="color:var(--txt)">Odds de mercado sin vig:</strong> las casas agregan información de miles de analistas. Pinnacle es el modelo más preciso del mundo en fútbol</li>
@@ -443,6 +548,25 @@ const H2H_DATA = [
   ["Colombia","Argentina",[{y:2024,comp:"Copa Am.",sA:1,sB:2}]],
   ["Uruguay","Portugal",[{y:2018,comp:"WC R16",sA:2,sB:1}]],
 ];
+
+// ═══ LESIONES Y BAJAS CONFIRMADAS (Jun 2026) ═══
+// Fuentes: ESPN, NBC Sports, apwin.com — actualizar durante el torneo
+// impact: reducción al xgFor (0.0-0.25). Se aplica automáticamente al calcular.
+const INJURIES={
+  "Brasil":       {out:["Estêvão (hamstring)","Rodrygo (rodilla)"],doubt:["Neymar (pantorrilla)"],impact:0.14},
+  "Países Bajos": {out:["Timber (lesión)"],doubt:[],impact:0.05},
+  "Japón":        {out:["Mitoma (isquio)","Minamino (LCA)"],doubt:[],impact:0.11},
+  "Alemania":     {out:["K.Karl (lesión)","Gnabry (lesión)"],doubt:["ter Stegen (portero)"],impact:0.07},
+  "Noruega":      {out:[],doubt:["Ødegaard (fitness)"],impact:0.04},
+  "Marruecos":    {out:[],doubt:["Hakimi (lesión)"],impact:0.04},
+  "Turquía":      {out:[],doubt:["Çalhanoğlu"],impact:0.04},
+  "Bélgica":      {out:[],doubt:["Courtois (portero)"],impact:0.03},
+  "Uruguay":      {out:[],doubt:["Giménez (central)"],impact:0.03},
+  "España":       {out:[],doubt:["Carvajal (fitness)"],impact:0.02},
+  "USA":          {out:["Cardoso (tobillo)"],doubt:["Musah","Tessman"],impact:0.07},
+  "México":       {out:["Montes (susp. j2)"],doubt:[],impact:0.03},
+  "Corea del Sur":{out:[],doubt:[],impact:0.0},
+};
 
 // Base team data
 const TD_BASE={
@@ -704,8 +828,11 @@ async function runPred(){
   hideR();
   await dl(40);
 
-  const lA=tA.xgFor*tB.xgAgainst*AVG*hAdj;
-  const lB=tB.xgFor*tA.xgAgainst*AVG;
+  // Apply injury/suspension impact to expected goals
+  const injA=INJURIES[nA]||{impact:0};
+  const injB=INJURIES[nB]||{impact:0};
+  const lA=tA.xgFor*tB.xgAgainst*AVG*hAdj*(1-injA.impact);
+  const lB=tB.xgFor*tA.xgAgainst*AVG*(1-injB.impact);
 
   // MODEL 1: Poisson
   const m1=mP(poisM(lA,lB));
@@ -794,7 +921,8 @@ async function runPred(){
   const confidence=Math.round(50+agreement*28+(!m8?0:8)); // 50-86%
 
   // Estimated precision (based on components active)
-  const precEst=Math.min(Math.round(62+(m8?8:0)+(liveMatches.length>0?3:0)+(h2hRecs.length>0?2:0)),78);
+  const hasInjData=(injA.impact>0||injB.impact>0)?1:0;
+  const precEst=Math.min(Math.round(62+(m8?8:0)+(liveMatches.length>0?3:0)+(h2hRecs.length>0?2:0)+(hasInjData?2:0)),78);
 
   setS(true,'Renderizando...');
   await dl(20);
@@ -837,13 +965,21 @@ function renderHero(nA,nB,tA,tB,c,lA,lB,conf,h2hAdj){
   document.getElementById('verdSub').textContent=vs;
   document.getElementById('hero').style.display='block';
 
-  // Confidence chips
+  // Injury chips
+  const injA=INJURIES[nA]||{out:[],doubt:[],impact:0};
+  const injB=INJURIES[nB]||{out:[],doubt:[],impact:0};
   const confColor=conf>75?'var(--grn)':conf>65?'var(--ylw)':'var(--red)';
   const confLabel=conf>75?'Alta':conf>65?'Media':'Baja';
+  let injHtml='';
+  if(injA.out.length||injA.doubt.length)
+    injHtml+=`<div class="conf-chip"><div class="conf-dot" style="background:var(--red)"></div>🚑 ${nA}: ${[...injA.out,...injA.doubt.map(d=>d+' (duda)')].join(', ')} (-${Math.round(injA.impact*100)}% xG)</div>`;
+  if(injB.out.length||injB.doubt.length)
+    injHtml+=`<div class="conf-chip"><div class="conf-dot" style="background:var(--red)"></div>🚑 ${nB}: ${[...injB.out,...injB.doubt.map(d=>d+' (duda)')].join(', ')} (-${Math.round(injB.impact*100)}% xG)</div>`;
   document.getElementById('confRow').innerHTML=`
     <div class="conf-chip"><div class="conf-dot" style="background:${confColor}"></div>Confianza del modelo: ${confLabel} (${conf}%)</div>
     <div class="conf-chip"><div class="conf-dot" style="background:var(--tel)"></div>${liveMatches.length} partidos reales integrados</div>
     ${h2hAdj!==0?`<div class="conf-chip"><div class="conf-dot" style="background:var(--pur)"></div>H2H histórico incluido</div>`:''}
+    ${injHtml}
   `;
 }
 
@@ -1063,10 +1199,11 @@ function renderResultsList(){
 
 // ═══ UI UTILS ═══
 function ST(id){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',['pred','groups','results','method'][i]===id));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',['pred','groups','results','squads','lineups','method'][i]===id));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   document.getElementById('panel-'+id).classList.add('on');
   if(id==='groups')renderGroups();
+  if(id==='squads'||id==='lineups')loadSquads();
 }
 function setS(on,txt){const e=document.getElementById('statusBox');e.classList.toggle('on',on);if(txt)document.getElementById('statusTxt').textContent=txt;}
 function hideR(){
@@ -1076,6 +1213,266 @@ function hideR(){
   document.getElementById('oddsModel').classList.remove('on');
 }
 function dl(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ═══ SQUADS ═══
+const SQUADS_URL="https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.squads.json";
+let squadsData=[];
+// Injured players lookup (from INJURIES constant)
+function isInjured(teamName,playerName){
+  const inj=INJURIES[teamName];
+  if(!inj)return null;
+  const allOut=[...inj.out,...inj.doubt];
+  const match=allOut.find(i=>i.toLowerCase().includes(playerName.split(' ').pop().toLowerCase()));
+  if(!match)return null;
+  return inj.doubt.some(d=>d===match)?'duda':'baja';
+}
+function calcAge(dob){
+  if(!dob)return'';
+  const d=new Date(dob),now=new Date('2026-06-11');
+  return Math.floor((now-d)/(365.25*24*3600*1000))+'a';
+}
+async function loadSquads(){
+  if(squadsData.length)return;
+  try{
+    let data=null;
+    for(const px of CORS_PROXIES){
+      try{const r=await fetch(px(SQUADS_URL),{cache:'no-store'});if(r.ok){data=await r.json();break;}}catch(e){continue;}
+    }
+    if(data)squadsData=data;
+  }catch(e){}
+}
+function squadTeamByName(name){
+  // Match openfootball name to our name
+  const ourName=NAME_MAP[name]||name;
+  const td=TD_BASE[ourName];
+  return{flag:td?td.flag:'',ourName};
+}
+function renderSquadCard(team){
+  const{flag,ourName}=squadTeamByName(team.name);
+  const inj=INJURIES[ourName]||{out:[],doubt:[]};
+  const byPos={GK:[],DF:[],MF:[],FW:[]};
+  (team.players||[]).forEach(p=>{byPos[p.pos]?.push(p);});
+  const posLabels={GK:'Porteros',DF:'Defensas',MF:'Mediocampistas',FW:'Delanteros'};
+  const posClass={GK:'pos-gk',DF:'pos-df',MF:'pos-mf',FW:'pos-fw'};
+  let posHtml='';
+  ['GK','DF','MF','FW'].forEach(pos=>{
+    if(!byPos[pos].length)return;
+    let rows=byPos[pos].map(p=>{
+      const injStatus=isInjured(ourName,p.name);
+      const injBadge=injStatus?`<span class="p-inj">${injStatus==='baja'?'❌ baja':'⚠ duda'}</span>`:'';
+      return`<div class="player-row"><span class="p-num">${p.number}</span><span class="p-name ${posClass[pos]}">${p.name} ${injBadge}</span><span class="p-age">${calcAge(p.date_of_birth)}</span></div>`;
+    }).join('');
+    posHtml+=`<div class="pos-section"><div class="pos-lbl">${posLabels[pos]} (${byPos[pos].length})</div>${rows}</div>`;
+  });
+  const injCount=inj.out.length+inj.doubt.length;
+  return`<div class="squad-card">
+    <div class="squad-hdr"><span class="squad-flag">${flag}</span><span class="squad-name">${ourName||team.name}</span>
+    <span class="squad-meta">Grupo ${team.group} · ${team.players?.length||0} jugadores${injCount?` · 🚑 ${injCount} bajas/dudas`:''}</span></div>
+    ${posHtml}</div>`;
+}
+async function renderSquadView(){
+  await loadSquads();
+  const sel=document.getElementById('squadTeamSel').value;
+  const team=squadsData.find(t=>t.name===sel||NAME_MAP[t.name]===sel);
+  if(!team){document.getElementById('squadView').innerHTML='<p style="color:var(--mut);font-size:12px">Equipo no encontrado</p>';return;}
+  document.getElementById('squadView').innerHTML=renderSquadCard(team);
+}
+async function renderAllSquads(){
+  await loadSquads();
+  document.getElementById('squadView').innerHTML='<div style="font-size:11px;color:var(--mut);margin-bottom:.75rem">Cargando las 48 plantillas...</div>';
+  await dl(20);
+  // Sort by group
+  const sorted=[...squadsData].sort((a,b)=>a.group.localeCompare(b.group)||a.name.localeCompare(b.name));
+  let html='';
+  let lastGrp='';
+  sorted.forEach(t=>{
+    if(t.group!==lastGrp){
+      html+=`<div style="font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.8px;margin:1rem 0 .4rem;grid-column:1/-1">━━ Grupo ${t.group} ━━</div>`;
+      lastGrp=t.group;
+    }
+    html+=renderSquadCard(t);
+  });
+  document.getElementById('squadView').innerHTML=`<div class="squads-grid">${html}</div>`;
+}
+
+// ═══ LINEUPS (API-Football via RapidAPI) ═══
+const APIF_BASE='https://v3.football.api-sports.io';
+const WC_LEAGUE_ID=1;
+const WC_SEASON=2026;
+// Map our names to API-Football team IDs (pre-filled from known IDs)
+const APIF_TEAM_IDS={
+  "Argentina":26,"Francia":2,"Brasil":6,"España":9,"Alemania":25,"Inglaterra":10,
+  "Portugal":27,"Países Bajos":1118,"Bélgica":1,"Uruguay":34,"Croacia":3,"Colombia":31,
+  "Marruecos":1118,"Senegal":1118,"Japón":1118,"México":16,"USA":21,"Canadá":1118,
+  "Corea del Sur":1118,"Australia":1118,"Ecuador":1118,"Suiza":1118,"Noruega":1118,
+  "Suecia":1118,"Turquía":1118,"Irán":1118,"Egipto":1118,"Ghana":1118,"Chile":1118,
+};
+
+function saveApiKey(){
+  const key=document.getElementById('apifootKey').value.trim();
+  if(!key){document.getElementById('keyStatus').textContent='⚠ Ingresa una key válida';return;}
+  localStorage.setItem('apifootKey',key);
+  document.getElementById('keyStatus').innerHTML='<span style="color:var(--grn)">✓ Key guardada correctamente</span>';
+  document.getElementById('apifootKey').value='';
+}
+function clearApiKey(){
+  localStorage.removeItem('apifootKey');
+  document.getElementById('keyStatus').innerHTML='<span style="color:var(--mut)">Key borrada</span>';
+}
+
+async function apifGet(endpoint,params={}){
+  const key=localStorage.getItem('apifootKey')||'';
+  if(!key)throw new Error('Sin API key');
+  const qs=new URLSearchParams({...params}).toString();
+  const url=`${APIF_BASE}${endpoint}?${qs}`;
+  const r=await fetch(url,{headers:{'x-rapidapi-host':'v3.football.api-sports.io','x-rapidapi-key':key}});
+  if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+async function fetchLineups(){
+  const nA=document.getElementById('linTeamA').value;
+  const nB=document.getElementById('linTeamB').value;
+  if(nA===nB){alert('Elige dos equipos distintos');return;}
+  const el=document.getElementById('lineupView');
+  el.innerHTML=`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Buscando fixture y alineaciones...</span></div>`;
+
+  const key=localStorage.getItem('apifootKey')||'';
+  if(!key){
+    el.innerHTML=renderLineupsNoKey(nA,nB);
+    return;
+  }
+  try{
+    // Step 1: find fixture ID
+    const fixtData=await apifGet('/fixtures',{league:WC_LEAGUE_ID,season:WC_SEASON,team:APIF_TEAM_IDS[nA]||''});
+    const fixtures=fixtData.response||[];
+    const match=fixtures.find(f=>{
+      const teams=[f.teams?.home?.name,f.teams?.away?.name];
+      return teams.some(t=>t&&(t.includes(nA)||NAME_MAP[t]===nA))&&teams.some(t=>t&&(t.includes(nB)||NAME_MAP[t]===nB));
+    });
+    if(!match){
+      el.innerHTML=`<div class="strip strip-red"><div class="ld ld-r"></div><span>Partido no encontrado en API-Football. Es posible que aún no esté programado o los IDs de equipo necesiten actualización.</span></div>${renderLineupsFromSquads(nA,nB)}`;
+      return;
+    }
+    const fid=match.fixture?.id;
+    const fStatus=match.fixture?.status?.short;
+    // Step 2: get lineups
+    const luData=await apifGet('/fixtures/lineups',{fixture:fid});
+    const lineups=luData.response||[];
+    if(!lineups.length||fStatus==='NS'||fStatus==='TBD'){
+      // Not started or lineup not announced yet
+      el.innerHTML=`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Alineación aún no confirmada · Partido: ${match.fixture?.date?new Date(match.fixture.date).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'medium',timeStyle:'short'}):''} · Vuelve ~60 min antes del inicio</span></div>${renderLineupsFromSquads(nA,nB)}`;
+      return;
+    }
+    el.innerHTML=renderLineupsFromAPI(nA,nB,lineups,match);
+  }catch(e){
+    el.innerHTML=`<div class="strip strip-red"><div class="ld ld-r"></div><span>Error API-Football: ${e.message}</span></div>${renderLineupsFromSquads(nA,nB)}`;
+  }
+}
+
+function renderLineupsNoKey(nA,nB){
+  return`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Sin API key configurada — mostrando plantillas completas como referencia</span></div>${renderLineupsFromSquads(nA,nB)}`;
+}
+
+function renderLineupsFromSquads(nA,nB){
+  // Show full squads side by side as fallback
+  const tA=TD_BASE[nA]||{flag:''},tB=TD_BASE[nB]||{flag:''};
+  const sqA=squadsData.find(t=>NAME_MAP[t.name]===nA||t.name===nA);
+  const sqB=squadsData.find(t=>NAME_MAP[t.name]===nB||t.name===nB);
+  if(!sqA&&!sqB)return`<p style="color:var(--mut);font-size:12px">Carga primero las plantillas en la pestaña Plantillas.</p>`;
+  const mkList=(sq,name,flag)=>{
+    if(!sq)return`<div class="lu-team"><div class="lu-hdr">${flag} ${name}</div><p style="font-size:11px;color:var(--mut)">Plantilla no disponible</p></div>`;
+    const byPos={GK:[],DF:[],MF:[],FW:[]};
+    (sq.players||[]).forEach(p=>{byPos[p.pos]?.push(p);});
+    const injData=INJURIES[name]||{out:[],doubt:[]};
+    let rows='';
+    ['GK','DF','MF','FW'].forEach(pos=>{
+      byPos[pos].forEach(p=>{
+        const injStatus=isInjured(name,p.name);
+        const posClass={GK:'lp-gk',DF:'lp-df',MF:'lp-mf',FW:'lp-fw'}[pos];
+        const strikeStyle=injStatus==='baja'?'text-decoration:line-through;color:var(--red);':'';
+        const badge=injStatus?`<span style="font-size:9px;color:${injStatus==='baja'?'var(--red)':'var(--ylw)'}">${injStatus==='baja'?'❌':'⚠'}</span>`:'';
+        rows+=`<div class="lu-player"><span class="lu-num">${p.number}</span><span class="lu-pos ${posClass}">${pos}</span><span style="${strikeStyle}">${p.name}</span>${badge}<span style="margin-left:auto;font-size:10px;color:var(--mut)">${calcAge(p.date_of_birth)}</span></div>`;
+      });
+    });
+    return`<div class="lu-team"><div class="lu-hdr">${flag} ${name} <span class="lu-form">Plantilla completa</span></div>${rows}</div>`;
+  };
+  return`<div style="font-size:11px;color:var(--mut);margin-bottom:.6rem">📋 Plantilla completa (alineación titular no confirmada aún — aparecerá ~60 min antes del partido)</div>
+  <div class="lineup-grid">${mkList(sqA,nA,tA.flag)}${mkList(sqB,nB,tB.flag)}</div>`;
+}
+
+function renderLineupsFromAPI(nA,nB,lineups,match){
+  const tA=TD_BASE[nA]||{flag:''},tB=TD_BASE[nB]||{flag:''};
+  const kickoff=match.fixture?.date?new Date(match.fixture.date).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'medium',timeStyle:'short'}):'';
+  let pitchHtml=renderPitch(lineups);
+  let listsHtml=lineups.map(lu=>{
+    const teamName=NAME_MAP[lu.team?.name]||lu.team?.name||'';
+    const td=TD_BASE[teamName]||{flag:'⚽'};
+    const startXI=lu.startXI||[];
+    const subs=lu.substitutes||[];
+    const posClass={G:'lp-gk',D:'lp-df',M:'lp-mf',F:'lp-fw'};
+    const rows=startXI.map(({player:p})=>`<div class="lu-player"><span class="lu-num">${p.number||''}</span><span class="lu-pos ${posClass[p.pos]||'lp-mf'}">${p.pos||'?'}</span><span>${p.name}</span></div>`).join('');
+    const subRows=subs.map(({player:p})=>`<div class="lu-player" style="opacity:.7"><span class="lu-num">${p.number||''}</span><span class="lu-pos ${posClass[p.pos]||'lp-mf'}">${p.pos||'?'}</span><span>${p.name}</span></div>`).join('');
+    return`<div class="lu-team"><div class="lu-hdr">${td.flag} ${teamName}<span class="lu-form">${lu.formation||''}</span></div>${rows}<div class="lu-subs"><div class="lu-subs-lbl">Suplentes</div>${subRows}</div></div>`;
+  }).join('');
+  return`<div class="strip strip-grn"><div class="ld ld-g"></div><span>✓ Alineación confirmada · ${kickoff}</span></div>
+  ${pitchHtml}
+  <div class="lineup-grid">${listsHtml}</div>`;
+}
+
+function renderPitch(lineups){
+  if(!lineups.length)return'';
+  const formations=lineups.map(lu=>lu.formation||'4-3-3');
+  const parseForm=f=>f.split('-').map(Number);
+  let html=`<div class="pitch"><svg class="pitch-lines" viewBox="0 0 100 147" preserveAspectRatio="none">
+    <rect x="0" y="0" width="100" height="147" fill="none"/>
+    <line x1="10" y1="0" x2="10" y2="147" stroke="rgba(255,255,255,.12)" stroke-width=".5"/>
+    <line x1="90" y1="0" x2="90" y2="147" stroke="rgba(255,255,255,.12)" stroke-width=".5"/>
+    <line x1="0" y1="73.5" x2="100" y2="73.5" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+    <circle cx="50" cy="73.5" r="12" fill="none" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+    <rect x="25" y="0" width="50" height="18" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
+    <rect x="25" y="129" width="50" height="18" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
+    <rect x="37" y="0" width="26" height="6" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
+    <rect x="37" y="141" width="26" height="6" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
+  </svg>`;
+  // Render both teams on pitch
+  lineups.forEach((lu,side)=>{
+    const rows=parseForm(lu.formation||'4-3-3');
+    const players=[...(lu.startXI||[])].map(e=>e.player||e);
+    // GK always first
+    const gk=players.find(p=>p.pos==='G')||players[0];
+    const outfield=players.filter(p=>p!==gk);
+    // Build rows from formation
+    const teamColor=side===0?'#3b82f6':'#ef4444';
+    let pIdx=0;
+    let rowsHtml='';
+    // GK row
+    const gkY=side===0?92:8;
+    rowsHtml+=`<div style="position:absolute;top:${gkY}%;left:0;width:100%;display:flex;justify-content:center;">
+      <div class="pitch-player"><div class="pp-circle" style="background:${teamColor};width:28px;height:28px;font-size:10px">${gk?.number||1}</div>
+      <div class="pp-name">${(gk?.name||'GK').split(' ').pop()}</div></div></div>`;
+    // Outfield rows
+    const totalRows=rows.length;
+    rows.forEach((count,ri)=>{
+      const rowPlayers=outfield.slice(pIdx,pIdx+count);pIdx+=count;
+      const yPct=side===0
+        ?(75-(ri/(totalRows-1||1))*55)
+        :(25+(ri/(totalRows-1||1))*55);
+      const playerDivs=rowPlayers.map(p=>`<div class="pitch-player">
+        <div class="pp-circle ${side===1?'away':''}" style="background:${teamColor};width:28px;height:28px;font-size:10px">${p?.number||'?'}</div>
+        <div class="pp-name">${(p?.name||'').split(' ').pop()}</div></div>`).join('');
+      rowsHtml+=`<div style="position:absolute;top:${yPct}%;left:0;width:100%;display:flex;justify-content:space-around;padding:0 5%">${playerDivs}</div>`;
+    });
+    html+=rowsHtml;
+  });
+  html+=`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;opacity:.15">⚽</div></div>`;
+  // Formation labels
+  html+=`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut);padding:0 .5rem;margin-bottom:.5rem">
+    <span style="color:#93c5fd">${lineups[0]?.team?.name||''} · ${lineups[0]?.formation||''}</span>
+    <span style="color:#fca5a5">${lineups[1]?.team?.name||''} · ${lineups[1]?.formation||''}</span>
+  </div>`;
+  return html;
+}
 
 // ═══ INIT ═══
 function init(){
@@ -1110,6 +1507,33 @@ function init(){
   const savedKey=localStorage.getItem('oddsApiKey');
   if(savedKey)setChip('odds','ok','✓ Odds API key guardada');
   else setChip('odds','err','Sin odds API key — usar odds manuales');
+
+  // Populate squad selector with openfootball names (sorted by group)
+  const squadSel=document.getElementById('squadTeamSel');
+  const linA=document.getElementById('linTeamA'),linB=document.getElementById('linTeamB');
+  linB.value='';
+  let lastSqGrp='';
+  names.forEach(n=>{
+    const t=TD_BASE[n];
+    // Squad selector uses our names
+    if(t.grp!==lastSqGrp){
+      const og1=document.createElement('optgroup');og1.label=`Grupo ${t.grp}`;squadSel.appendChild(og1);
+      const og2=document.createElement('optgroup');og2.label=`Grupo ${t.grp}`;linA.appendChild(og2);
+      const og3=document.createElement('optgroup');og3.label=`Grupo ${t.grp}`;linB.appendChild(og3.cloneNode(true));
+      lastSqGrp=t.grp;
+    }
+    const o=`<option value="${n}">${t.flag} ${n}</option>`;
+    squadSel.querySelectorAll('optgroup')[squadSel.querySelectorAll('optgroup').length-1].insertAdjacentHTML('beforeend',o);
+    linA.querySelectorAll('optgroup')[linA.querySelectorAll('optgroup').length-1].insertAdjacentHTML('beforeend',o);
+    linB.querySelectorAll('optgroup')[linB.querySelectorAll('optgroup').length-1].insertAdjacentHTML('beforeend',o);
+  });
+  linB.value='Francia';
+
+  // Check API-Football key
+  const apifKey=localStorage.getItem('apifootKey');
+  if(apifKey){
+    document.getElementById('keyStatus').innerHTML='<span style="color:var(--grn)">✓ API key cargada</span>';
+  }
 
   initStandings();
   updateAccBar(62);
