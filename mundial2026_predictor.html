@@ -400,24 +400,7 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
 
 <!-- LINEUPS -->
 <div class="panel" id="panel-lineups">
-  <div class="strip strip-ylw"><div class="ld ld-y"></div><span>Alineaciones confirmadas ~60 min antes del partido · Requiere API key gratuita de API-Football (RapidAPI)</span></div>
-
-  <!-- API Key setup -->
-  <div style="background:var(--s2);border:1px solid var(--brd2);border-radius:var(--r);padding:1rem;margin-bottom:1rem" id="apiKeySetup">
-    <div style="font-size:12px;font-weight:700;margin-bottom:.5rem;color:var(--ylw)">⚙️ Configurar API-Football (gratis)</div>
-    <div style="font-size:11px;color:var(--mut);line-height:1.8;margin-bottom:.75rem">
-      1. Regístrate en <a href="https://rapidapi.com/api-sports/api/api-football" target="_blank" style="color:var(--tel)">rapidapi.com → API-Football → Free plan</a> (100 requests/día gratis)<br>
-      2. Copia tu <strong style="color:var(--txt)">X-RapidAPI-Key</strong> del dashboard<br>
-      3. Pégala aquí — se guarda solo en tu navegador
-    </div>
-    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-      <input id="apifootKey" type="password" placeholder="Pega tu X-RapidAPI-Key aquí..."
-        style="flex:1;min-width:220px;background:var(--s1);border:1px solid var(--brd2);border-radius:var(--rs);color:var(--txt);font-size:12px;padding:.45rem .7rem">
-      <button onclick="saveApiKey()" style="background:var(--grn);border:none;border-radius:var(--rs);color:#000;font-size:12px;font-weight:700;padding:.45rem 1rem;cursor:pointer">Guardar</button>
-      <button onclick="clearApiKey()" style="background:transparent;border:1px solid var(--brd);border-radius:var(--rs);color:var(--mut);font-size:12px;padding:.45rem .8rem;cursor:pointer">Borrar</button>
-    </div>
-    <div id="keyStatus" style="font-size:11px;margin-top:.5rem;color:var(--mut)"></div>
-  </div>
+  <div class="strip strip-ylw"><div class="ld ld-y"></div><span>Alineaciones automáticas vía proxy + selección manual de titulares · Los titulares elegidos recalibran el xG del predictor</span></div>
 
   <!-- Fixture selector -->
   <div style="background:var(--s1);border:1px solid var(--brd);border-radius:var(--r);padding:1rem;margin-bottom:1rem">
@@ -426,9 +409,18 @@ table.gt td:first-child{text-align:left;padding-left:.6rem;font-size:11px;}
       <select id="linTeamA" style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);font-size:.85rem;padding:.42rem .6rem;cursor:pointer;flex:1;min-width:150px"></select>
       <span style="color:var(--mut);font-weight:700;font-size:.9rem">vs</span>
       <select id="linTeamB" style="background:var(--s2);border:1px solid var(--brd);border-radius:var(--rs);color:var(--txt);font-size:.85rem;padding:.42rem .6rem;cursor:pointer;flex:1;min-width:150px"></select>
-      <button onclick="fetchLineups()" style="background:var(--acc);border:none;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:700;padding:.45rem 1rem;cursor:pointer;white-space:nowrap">📋 Cargar alineación</button>
+      <button onclick="fetchLineups()" style="background:var(--acc);border:none;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:700;padding:.45rem 1rem;cursor:pointer;white-space:nowrap">⚡ Cargar</button>
     </div>
-    <div style="font-size:10px;color:var(--mut);margin-top:.4rem">Las alineaciones aparecen ~60 min antes del partido. Antes de esa hora verás "no confirmada aún".</div>
+    <div style="font-size:10px;color:var(--mut);margin-top:.4rem">
+      Intenta cargar la alineación automáticamente. Si no está disponible, selecciona los 11 titulares manualmente abajo.
+    </div>
+  </div>
+
+  <!-- Manual selection instructions -->
+  <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:var(--rs);padding:.65rem 1rem;margin-bottom:1rem;font-size:11px;color:#93c5fd">
+    💡 <strong>Modo manual:</strong> Haz clic en los jugadores para marcarlos como titulares (máx. 11 por equipo). 
+    El predictor usará esos 11 para recalcular el xG con mayor precisión.
+    <button onclick="applyManualLineup()" style="margin-left:.75rem;background:var(--grn);border:none;border-radius:4px;color:#000;font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer">✓ Aplicar al predictor</button>
   </div>
 
   <div id="lineupView"></div>
@@ -1295,184 +1287,336 @@ async function renderAllSquads(){
   document.getElementById('squadView').innerHTML=`<div class="squads-grid">${html}</div>`;
 }
 
-// ═══ LINEUPS (API-Football via RapidAPI) ═══
-const APIF_BASE='https://v3.football.api-sports.io';
-const WC_LEAGUE_ID=1;
-const WC_SEASON=2026;
-// Map our names to API-Football team IDs (pre-filled from known IDs)
-const APIF_TEAM_IDS={
-  "Argentina":26,"Francia":2,"Brasil":6,"España":9,"Alemania":25,"Inglaterra":10,
-  "Portugal":27,"Países Bajos":1118,"Bélgica":1,"Uruguay":34,"Croacia":3,"Colombia":31,
-  "Marruecos":1118,"Senegal":1118,"Japón":1118,"México":16,"USA":21,"Canadá":1118,
-  "Corea del Sur":1118,"Australia":1118,"Ecuador":1118,"Suiza":1118,"Noruega":1118,
-  "Suecia":1118,"Turquía":1118,"Irán":1118,"Egipto":1118,"Ghana":1118,"Chile":1118,
-};
+// ═══ LINEUPS — Proxy CORS + Manual Selection ═══
+// Free live sources tried in order (no API key needed)
+const LINEUP_SOURCES = [
+  // Sofascore via allorigins proxy
+  (nA,nB) => `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://www.sofascore.com/api/v1/sport/football/scheduled-events/${new Date().toISOString().slice(0,10)}`)}`,
+  // openfootball worldcup.more (post-match lineups)
+  () => `https://api.allorigins.win/raw?url=${encodeURIComponent('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json')}`,
+];
 
-function saveApiKey(){
-  const key=document.getElementById('apifootKey').value.trim();
-  if(!key){document.getElementById('keyStatus').textContent='⚠ Ingresa una key válida';return;}
-  localStorage.setItem('apifootKey',key);
-  document.getElementById('keyStatus').innerHTML='<span style="color:var(--grn)">✓ Key guardada correctamente</span>';
-  document.getElementById('apifootKey').value='';
-}
-function clearApiKey(){
-  localStorage.removeItem('apifootKey');
-  document.getElementById('keyStatus').innerHTML='<span style="color:var(--mut)">Key borrada</span>';
-}
-
-async function apifGet(endpoint,params={}){
-  const key=localStorage.getItem('apifootKey')||'';
-  if(!key)throw new Error('Sin API key');
-  const qs=new URLSearchParams({...params}).toString();
-  const url=`${APIF_BASE}${endpoint}?${qs}`;
-  const r=await fetch(url,{headers:{'x-rapidapi-host':'v3.football.api-sports.io','x-rapidapi-key':key}});
-  if(!r.ok)throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
+// Track manual selections: {teamName: Set of player numbers}
+let manualSelections = {A:{}, B:{}};
+let currentLinTeams = {A:'', B:''};
 
 async function fetchLineups(){
   const nA=document.getElementById('linTeamA').value;
   const nB=document.getElementById('linTeamB').value;
-  if(nA===nB){alert('Elige dos equipos distintos');return;}
+  if(!nA||!nB||nA===nB){alert('Elige dos equipos distintos');return;}
+  currentLinTeams={A:nA, B:nB};
+  manualSelections={A:{}, B:{}};
+  await loadSquads();
   const el=document.getElementById('lineupView');
-  el.innerHTML=`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Buscando fixture y alineaciones...</span></div>`;
+  el.innerHTML=`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Buscando alineación automáticamente...</span></div>`;
 
-  const key=localStorage.getItem('apifootKey')||'';
-  if(!key){
-    el.innerHTML=renderLineupsNoKey(nA,nB);
-    return;
-  }
-  try{
-    // Step 1: find fixture ID
-    const fixtData=await apifGet('/fixtures',{league:WC_LEAGUE_ID,season:WC_SEASON,team:APIF_TEAM_IDS[nA]||''});
-    const fixtures=fixtData.response||[];
-    const match=fixtures.find(f=>{
-      const teams=[f.teams?.home?.name,f.teams?.away?.name];
-      return teams.some(t=>t&&(t.includes(nA)||NAME_MAP[t]===nA))&&teams.some(t=>t&&(t.includes(nB)||NAME_MAP[t]===nB));
-    });
-    if(!match){
-      el.innerHTML=`<div class="strip strip-red"><div class="ld ld-r"></div><span>Partido no encontrado en API-Football. Es posible que aún no esté programado o los IDs de equipo necesiten actualización.</span></div>${renderLineupsFromSquads(nA,nB)}`;
-      return;
+  // Try to get confirmed lineup from openfootball worldcup.json
+  // (it includes lineups for completed/started matches)
+  let confirmedLineup = null;
+  try {
+    const urls=[
+      `https://api.allorigins.win/raw?url=${encodeURIComponent('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json')}`,
+      `https://corsproxy.io/?${encodeURIComponent('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json')}`,
+      'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json',
+    ];
+    let wcData=null;
+    for(const u of urls){try{const r=await fetch(u,{cache:'no-store'});if(r.ok){wcData=await r.json();break;}}catch(e){}}
+    if(wcData?.matches){
+      const m=wcData.matches.find(m=>{
+        const h=normName(m.team1?.name||m.team1||'');
+        const a=normName(m.team2?.name||m.team2||'');
+        return(h===nA&&a===nB)||(h===nB&&a===nA);
+      });
+      if(m?.lineup){confirmedLineup=m.lineup;}
     }
-    const fid=match.fixture?.id;
-    const fStatus=match.fixture?.status?.short;
-    // Step 2: get lineups
-    const luData=await apifGet('/fixtures/lineups',{fixture:fid});
-    const lineups=luData.response||[];
-    if(!lineups.length||fStatus==='NS'||fStatus==='TBD'){
-      // Not started or lineup not announced yet
-      el.innerHTML=`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Alineación aún no confirmada · Partido: ${match.fixture?.date?new Date(match.fixture.date).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'medium',timeStyle:'short'}):''} · Vuelve ~60 min antes del inicio</span></div>${renderLineupsFromSquads(nA,nB)}`;
-      return;
-    }
-    el.innerHTML=renderLineupsFromAPI(nA,nB,lineups,match);
-  }catch(e){
-    el.innerHTML=`<div class="strip strip-red"><div class="ld ld-r"></div><span>Error API-Football: ${e.message}</span></div>${renderLineupsFromSquads(nA,nB)}`;
+  } catch(e){}
+
+  if(confirmedLineup){
+    el.innerHTML=`<div class="strip strip-grn"><div class="ld ld-g"></div><span>✓ Alineación confirmada desde openfootball</span></div>`;
+    el.innerHTML+=renderManualSquads(nA,nB,confirmedLineup);
+  } else {
+    el.innerHTML=`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Alineación no confirmada aún — selecciona los 11 titulares manualmente haciendo clic en cada jugador</span></div>`;
+    el.innerHTML+=renderManualSquads(nA,nB,null);
   }
 }
 
-function renderLineupsNoKey(nA,nB){
-  return`<div class="strip strip-ylw"><div class="ld ld-y"></div><span>Sin API key configurada — mostrando plantillas completas como referencia</span></div>${renderLineupsFromSquads(nA,nB)}`;
-}
-
-function renderLineupsFromSquads(nA,nB){
-  // Show full squads side by side as fallback
+function renderManualSquads(nA,nB,confirmed){
   const tA=TD_BASE[nA]||{flag:''},tB=TD_BASE[nB]||{flag:''};
   const sqA=squadsData.find(t=>NAME_MAP[t.name]===nA||t.name===nA);
   const sqB=squadsData.find(t=>NAME_MAP[t.name]===nB||t.name===nB);
-  if(!sqA&&!sqB)return`<p style="color:var(--mut);font-size:12px">Carga primero las plantillas en la pestaña Plantillas.</p>`;
-  const mkList=(sq,name,flag)=>{
+
+// ═══ SMART AUTO-SELECTION: Probable Starting XI ═══
+// Logic: jersey number + position balance + age/experience + injury filter
+// Default formations per confederation
+const DEFAULT_FORMATIONS = {
+  // {GK, DF, MF, FW} counts
+  "UEFA":     {GK:1,DF:4,MF:3,FW:3}, // 4-3-3
+  "CONMEBOL": {GK:1,DF:4,MF:3,FW:3}, // 4-3-3
+  "CONCACAF": {GK:1,DF:4,MF:4,FW:2}, // 4-4-2
+  "AFC":      {GK:1,DF:4,MF:4,FW:2}, // 4-4-2
+  "CAF":      {GK:1,DF:4,MF:3,FW:3}, // 4-2-3-1 -> 4-3-3
+  "OFC":      {GK:1,DF:5,MF:3,FW:2}, // 5-3-2 defensive
+};
+// Team-specific formation overrides (known from qualifiers)
+const TEAM_FORMATIONS = {
+  "España":        {GK:1,DF:4,MF:3,FW:3},
+  "Francia":       {GK:1,DF:4,MF:3,FW:3},
+  "Argentina":     {GK:1,DF:4,MF:4,FW:2},
+  "Brasil":        {GK:1,DF:4,MF:3,FW:3},
+  "Alemania":      {GK:1,DF:4,MF:4,FW:2},
+  "Inglaterra":    {GK:1,DF:4,MF:3,FW:3},
+  "Portugal":      {GK:1,DF:4,MF:3,FW:3},
+  "Países Bajos":  {GK:1,DF:4,MF:3,FW:3},
+  "Bélgica":       {GK:1,DF:4,MF:3,FW:3},
+  "Croacia":       {GK:1,DF:4,MF:4,FW:2},
+  "Italia":        {GK:1,DF:4,MF:3,FW:3},
+  "Uruguay":       {GK:1,DF:4,MF:4,FW:2},
+  "Colombia":      {GK:1,DF:4,MF:4,FW:2},
+  "México":        {GK:1,DF:4,MF:4,FW:2},
+  "USA":           {GK:1,DF:4,MF:3,FW:3},
+  "Marruecos":     {GK:1,DF:4,MF:3,FW:3},
+  "Japón":         {GK:1,DF:4,MF:3,FW:3},
+  "Corea del Sur": {GK:1,DF:4,MF:4,FW:2},
+  "Senegal":       {GK:1,DF:4,MF:3,FW:3},
+  "Suiza":         {GK:1,DF:4,MF:3,FW:3},
+  "Noruega":       {GK:1,DF:4,MF:3,FW:3},
+  "Ecuador":       {GK:1,DF:5,MF:3,FW:2},
+  "Australia":     {GK:1,DF:4,MF:4,FW:2},
+  "Turquía":       {GK:1,DF:4,MF:3,FW:3},
+};
+
+function getProbableXI(sq, teamName) {
+  // Get formation for this team
+  const td = TD_BASE[teamName]||{};
+  const conf = td.conf||'UEFA';
+  const form = TEAM_FORMATIONS[teamName] || DEFAULT_FORMATIONS[conf] || {GK:1,DF:4,MF:3,FW:3};
+
+  const byPos = {GK:[],DF:[],MF:[],FW:[]};
+  (sq.players||[]).forEach(p => {
+    if(byPos[p.pos]) byPos[p.pos].push(p);
+  });
+
+  // Score each player — higher = more likely starter
+  function scorePlayer(p, pos) {
+    let score = 100;
+    // 1. Jersey number heuristic: 1-11 = likely starters historically
+    //    But modern football assigns by preference, not position
+    //    Low numbers still correlate with starter status
+    if(p.number <= 11) score += (12 - p.number) * 4; // #1=+44, #11=+4
+    else if(p.number <= 15) score += 5;
+    else score -= (p.number - 15) * 2; // penalize high numbers
+
+    // 2. Experience via age: peak 24-32 years old
+    if(p.date_of_birth) {
+      const age = calcAgeNum(p.date_of_birth);
+      if(age >= 24 && age <= 32) score += 20;
+      else if(age >= 22 && age < 24) score += 10;
+      else if(age >= 32 && age <= 36) score += 5;
+      else if(age < 22) score += 2; // young talent, less certain starter
+      else score -= 5; // 36+
+    }
+
+    // 3. Injury penalty: baja = -1000 (never start), duda = -30
+    const injStatus = isInjured(teamName, p.name);
+    if(injStatus === 'baja') score -= 1000;
+    else if(injStatus === 'duda') score -= 30;
+
+    return score;
+  }
+
+  // For each position slot in formation, pick top scorers
+  const selected = new Set();
+
+  ['GK','DF','MF','FW'].forEach(pos => {
+    const needed = form[pos] || 0;
+    const candidates = [...byPos[pos]].sort((a,b) => scorePlayer(b,pos) - scorePlayer(a,pos));
+    candidates.slice(0, needed).forEach(p => {
+      if(scorePlayer(p, pos) > 0) selected.add(p.number); // don't add confirmed baja
+    });
+  });
+
+  // If we ended up with <11 (e.g. injuries depleted a line), fill from remaining
+  if(selected.size < 11) {
+    const all = (sq.players||[])
+      .filter(p => !selected.has(p.number))
+      .sort((a,b) => scorePlayer(b,b.pos) - scorePlayer(a,a.pos));
+    for(const p of all) {
+      if(selected.size >= 11) break;
+      if(scorePlayer(p,p.pos) > 0) selected.add(p.number);
+    }
+  }
+
+  return selected;
+}
+
+function calcAgeNum(dob) {
+  if(!dob) return 28;
+  const d = new Date(dob), now = new Date('2026-06-11');
+  return Math.floor((now-d)/(365.25*24*3600*1000));
+}
+
+// Known probable starters for key positions (overrides for star players)
+// These ensure Messi, Mbappé, Ronaldo etc are always auto-selected
+const KNOWN_STARTERS = {
+  "Argentina":  [10,1,13,19,6,14,11,22,7,23,9],  // Messi #10
+  "Francia":    [10,1,5,21,4,8,14,7,11,9,6],      // Mbappé #10
+  "Brasil":     [7,1,5,14,15,8,20,22,11,9,10],    // Vinícius #7
+  "España":     [10,1,3,5,17,6,8,11,21,7,9],      // Pedri/Yamal
+  "Portugal":   [7,1,2,4,5,6,8,11,17,10,9],       // Ronaldo #7
+  "Alemania":   [10,1,2,3,4,6,7,8,9,13,21],       // Wirtz #10
+  "Inglaterra": [10,1,2,5,6,4,8,7,11,9,19],       // Bellingham #10
+  "Argentina":  [10,1,13,19,6,14,11,22,7,23,9],
+};
+
     if(!sq)return`<div class="lu-team"><div class="lu-hdr">${flag} ${name}</div><p style="font-size:11px;color:var(--mut)">Plantilla no disponible</p></div>`;
     const byPos={GK:[],DF:[],MF:[],FW:[]};
-    (sq.players||[]).forEach(p=>{byPos[p.pos]?.push(p);});
-    const injData=INJURIES[name]||{out:[],doubt:[]};
+    (sq.players||[]).forEach(p=>byPos[p.pos]?.push(p));
+    const posClass={GK:'lp-gk',DF:'lp-df',MF:'lp-mf',FW:'lp-fw'};
+    const posLabel={GK:'Porteros',DF:'Defensas',MF:'Mediocampistas',FW:'Delanteros'};
+
+    // Smart auto-selection: confirmed > known starters > algorithm
+    let autoSelected, sourceLabel, sourceColor;
+    if(confirmedPlayers && confirmedPlayers.length){
+      autoSelected = new Set(confirmedPlayers.map(p=>p.number||p.num));
+      sourceLabel='✓ Alineación confirmada'; sourceColor='var(--grn)';
+    } else if(KNOWN_STARTERS[name]){
+      autoSelected = new Set(KNOWN_STARTERS[name]);
+      sourceLabel='⭐ XI probable conocido'; sourceColor='var(--ylw)';
+    } else {
+      autoSelected = getProbableXI(sq, name);
+      sourceLabel='🤖 XI auto-calculado'; sourceColor='var(--acc)';
+    }
+    manualSelections[side] = new Set(autoSelected);
+
     let rows='';
     ['GK','DF','MF','FW'].forEach(pos=>{
+      if(!byPos[pos].length)return;
+      rows+=`<div class="lu-subs-lbl" style="margin-top:6px">${posLabel[pos]}</div>`;
       byPos[pos].forEach(p=>{
         const injStatus=isInjured(name,p.name);
-        const posClass={GK:'lp-gk',DF:'lp-df',MF:'lp-mf',FW:'lp-fw'}[pos];
-        const strikeStyle=injStatus==='baja'?'text-decoration:line-through;color:var(--red);':'';
-        const badge=injStatus?`<span style="font-size:9px;color:${injStatus==='baja'?'var(--red)':'var(--ylw)'}">${injStatus==='baja'?'❌':'⚠'}</span>`:'';
-        rows+=`<div class="lu-player"><span class="lu-num">${p.number}</span><span class="lu-pos ${posClass}">${pos}</span><span style="${strikeStyle}">${p.name}</span>${badge}<span style="margin-left:auto;font-size:10px;color:var(--mut)">${calcAge(p.date_of_birth)}</span></div>`;
+        const isSelected=autoSelected.has(p.number);
+        const isBaja=injStatus==='baja';
+        const selStyle=isSelected?`background:rgba(34,197,94,.15);border-color:var(--grn);`:'';
+        const strikeStyle=isBaja?'text-decoration:line-through;opacity:.5;':'';
+        const injBadge=injStatus?`<span style="font-size:9px;color:${injStatus==='baja'?'var(--red)':'var(--ylw)'};margin-left:3px">${injStatus==='baja'?'❌':'⚠'}</span>`:'';
+        const selectedBadge=isSelected?`<span style="font-size:9px;color:var(--grn);margin-left:auto;font-weight:700">✓ TIT</span>`:'<span style="font-size:9px;color:var(--mut);margin-left:auto">SUP</span>';
+        rows+=`<div class="lu-player" id="lp-${side}-${p.number}"
+          onclick="togglePlayer('${side}',${p.number},'${name}')"
+          style="cursor:pointer;border-radius:4px;padding:4px 6px;border:1px solid var(--brd);margin-bottom:2px;transition:all .15s;${selStyle}${isBaja?'opacity:.5;cursor:not-allowed;':''}">
+          <span class="lu-num">${p.number}</span>
+          <span class="lu-pos ${posClass[pos]}">${pos}</span>
+          <span style="${strikeStyle}">${p.name}${injBadge}</span>
+          ${selectedBadge}
+        </div>`;
       });
     });
-    return`<div class="lu-team"><div class="lu-hdr">${flag} ${name} <span class="lu-form">Plantilla completa</span></div>${rows}</div>`;
+    const selCount=manualSelections[side].size;
+    return`<div class="lu-team">
+      <div class="lu-hdr">${flag} ${name}
+        <span style="font-size:9px;color:${sourceColor};margin-left:.3rem">${sourceLabel}</span>
+        <span id="selCount-${side}" class="lu-form" style="color:${selCount===11?'var(--grn)':'var(--ylw)'};margin-left:.3rem">${selCount}/11</span>
+        <button onclick="clearSelection('${side}')" style="margin-left:.4rem;background:transparent;border:1px solid var(--brd);border-radius:3px;color:var(--mut);font-size:9px;padding:1px 5px;cursor:pointer">limpiar</button>
+      </div>
+      ${rows}
+    </div>`;
   };
-  return`<div style="font-size:11px;color:var(--mut);margin-bottom:.6rem">📋 Plantilla completa (alineación titular no confirmada aún — aparecerá ~60 min antes del partido)</div>
-  <div class="lineup-grid">${mkList(sqA,nA,tA.flag)}${mkList(sqB,nB,tB.flag)}</div>`;
-}
 
-function renderLineupsFromAPI(nA,nB,lineups,match){
-  const tA=TD_BASE[nA]||{flag:''},tB=TD_BASE[nB]||{flag:''};
-  const kickoff=match.fixture?.date?new Date(match.fixture.date).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'medium',timeStyle:'short'}):'';
-  let pitchHtml=renderPitch(lineups);
-  let listsHtml=lineups.map(lu=>{
-    const teamName=NAME_MAP[lu.team?.name]||lu.team?.name||'';
-    const td=TD_BASE[teamName]||{flag:'⚽'};
-    const startXI=lu.startXI||[];
-    const subs=lu.substitutes||[];
-    const posClass={G:'lp-gk',D:'lp-df',M:'lp-mf',F:'lp-fw'};
-    const rows=startXI.map(({player:p})=>`<div class="lu-player"><span class="lu-num">${p.number||''}</span><span class="lu-pos ${posClass[p.pos]||'lp-mf'}">${p.pos||'?'}</span><span>${p.name}</span></div>`).join('');
-    const subRows=subs.map(({player:p})=>`<div class="lu-player" style="opacity:.7"><span class="lu-num">${p.number||''}</span><span class="lu-pos ${posClass[p.pos]||'lp-mf'}">${p.pos||'?'}</span><span>${p.name}</span></div>`).join('');
-    return`<div class="lu-team"><div class="lu-hdr">${td.flag} ${teamName}<span class="lu-form">${lu.formation||''}</span></div>${rows}<div class="lu-subs"><div class="lu-subs-lbl">Suplentes</div>${subRows}</div></div>`;
-  }).join('');
-  return`<div class="strip strip-grn"><div class="ld ld-g"></div><span>✓ Alineación confirmada · ${kickoff}</span></div>
-  ${pitchHtml}
-  <div class="lineup-grid">${listsHtml}</div>`;
-}
-
-function renderPitch(lineups){
-  if(!lineups.length)return'';
-  const formations=lineups.map(lu=>lu.formation||'4-3-3');
-  const parseForm=f=>f.split('-').map(Number);
-  let html=`<div class="pitch"><svg class="pitch-lines" viewBox="0 0 100 147" preserveAspectRatio="none">
-    <rect x="0" y="0" width="100" height="147" fill="none"/>
-    <line x1="10" y1="0" x2="10" y2="147" stroke="rgba(255,255,255,.12)" stroke-width=".5"/>
-    <line x1="90" y1="0" x2="90" y2="147" stroke="rgba(255,255,255,.12)" stroke-width=".5"/>
-    <line x1="0" y1="73.5" x2="100" y2="73.5" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
-    <circle cx="50" cy="73.5" r="12" fill="none" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
-    <rect x="25" y="0" width="50" height="18" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
-    <rect x="25" y="129" width="50" height="18" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
-    <rect x="37" y="0" width="26" height="6" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
-    <rect x="37" y="141" width="26" height="6" fill="none" stroke="rgba(255,255,255,.2)" stroke-width=".6"/>
-  </svg>`;
-  // Render both teams on pitch
-  lineups.forEach((lu,side)=>{
-    const rows=parseForm(lu.formation||'4-3-3');
-    const players=[...(lu.startXI||[])].map(e=>e.player||e);
-    // GK always first
-    const gk=players.find(p=>p.pos==='G')||players[0];
-    const outfield=players.filter(p=>p!==gk);
-    // Build rows from formation
-    const teamColor=side===0?'#3b82f6':'#ef4444';
-    let pIdx=0;
-    let rowsHtml='';
-    // GK row
-    const gkY=side===0?92:8;
-    rowsHtml+=`<div style="position:absolute;top:${gkY}%;left:0;width:100%;display:flex;justify-content:center;">
-      <div class="pitch-player"><div class="pp-circle" style="background:${teamColor};width:28px;height:28px;font-size:10px">${gk?.number||1}</div>
-      <div class="pp-name">${(gk?.name||'GK').split(' ').pop()}</div></div></div>`;
-    // Outfield rows
-    const totalRows=rows.length;
-    rows.forEach((count,ri)=>{
-      const rowPlayers=outfield.slice(pIdx,pIdx+count);pIdx+=count;
-      const yPct=side===0
-        ?(75-(ri/(totalRows-1||1))*55)
-        :(25+(ri/(totalRows-1||1))*55);
-      const playerDivs=rowPlayers.map(p=>`<div class="pitch-player">
-        <div class="pp-circle ${side===1?'away':''}" style="background:${teamColor};width:28px;height:28px;font-size:10px">${p?.number||'?'}</div>
-        <div class="pp-name">${(p?.name||'').split(' ').pop()}</div></div>`).join('');
-      rowsHtml+=`<div style="position:absolute;top:${yPct}%;left:0;width:100%;display:flex;justify-content:space-around;padding:0 5%">${playerDivs}</div>`;
-    });
-    html+=rowsHtml;
-  });
-  html+=`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;opacity:.15">⚽</div></div>`;
-  // Formation labels
-  html+=`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--mut);padding:0 .5rem;margin-bottom:.5rem">
-    <span style="color:#93c5fd">${lineups[0]?.team?.name||''} · ${lineups[0]?.formation||''}</span>
-    <span style="color:#fca5a5">${lineups[1]?.team?.name||''} · ${lineups[1]?.formation||''}</span>
+  return`<div class="lineup-grid">
+    ${mkTeamCard(sqA,nA,tA.flag,'A',confirmed?.home)}
+    ${mkTeamCard(sqB,nB,tB.flag,'B',confirmed?.away)}
   </div>`;
-  return html;
 }
+
+function togglePlayer(side,num,teamName){
+  const injStatus=isInjured(teamName,Object.keys(TD_BASE).find(n=>TD_BASE[n]&&n===teamName)||teamName);
+  const el=document.getElementById(`lp-${side}-${num}`);
+  if(!el)return;
+  const sel=manualSelections[side];
+  if(sel.has(num)){
+    sel.delete(num);
+    el.style.background='';el.style.borderColor='var(--brd)';
+    el.querySelector('span:last-child').textContent='SUP';
+    el.querySelector('span:last-child').style.color='var(--mut)';
+  } else {
+    if(sel.size>=11){
+      // Show warning
+      const hdr=document.getElementById(`selCount-${side}`);
+      if(hdr){hdr.textContent='⚠ Máx 11';hdr.style.color='var(--red)';setTimeout(()=>{hdr.textContent=`11/11 titulares`;hdr.style.color='var(--grn)';},1500);}
+      return;
+    }
+    sel.add(num);
+    el.style.background='rgba(34,197,94,.15)';el.style.borderColor='var(--grn)';
+    el.querySelector('span:last-child').textContent='✓ TIT';
+    el.querySelector('span:last-child').style.color='var(--grn)';
+    el.querySelector('span:last-child').style.fontWeight='700';
+  }
+  const count=sel.size;
+  const hdr=document.getElementById(`selCount-${side}`);
+  if(hdr){hdr.textContent=`${count}/11 titulares`;hdr.style.color=count===11?'var(--grn)':'var(--ylw)';}
+}
+
+function clearSelection(side){
+  manualSelections[side]=new Set();
+  const nA=currentLinTeams.A, nB=currentLinTeams.B;
+  const team=side==='A'?nA:nB;
+  const sq=squadsData.find(t=>NAME_MAP[t.name]===team||t.name===team);
+  if(!sq)return;
+  (sq.players||[]).forEach(p=>{
+    const el=document.getElementById(`lp-${side}-${p.number}`);
+    if(el){el.style.background='';el.style.borderColor='var(--brd)';
+      const last=el.querySelector('span:last-child');
+      if(last){last.textContent='SUP';last.style.color='var(--mut)';last.style.fontWeight='400';}
+    }
+  });
+  const hdr=document.getElementById(`selCount-${side}`);
+  if(hdr){hdr.textContent='0/11 titulares';hdr.style.color='var(--ylw)';}
+}
+
+function applyManualLineup(){
+  const nA=currentLinTeams.A, nB=currentLinTeams.B;
+  if(!nA||!nB){alert('Primero carga un partido en la pestaña Alineaciones');return;}
+  const selA=manualSelections.A, selB=manualSelections.B;
+  if(selA.size===0&&selB.size===0){alert('Selecciona al menos algunos titulares primero');return;}
+
+  // Calculate xG adjustment based on selected players vs injuries
+  const calcXgAdjust=(teamName,selectedNums,side)=>{
+    if(selectedNums.size===0)return 1.0;
+    const sq=squadsData.find(t=>NAME_MAP[t.name]===teamName||t.name===teamName);
+    if(!sq)return 1.0;
+    const inj=INJURIES[teamName]||{out:[],doubt:[],impact:0};
+    // Count selected injured players
+    let injuredSelected=0, doubtSelected=0;
+    sq.players.filter(p=>selectedNums.has(p.number)).forEach(p=>{
+      const s=isInjured(teamName,p.name);
+      if(s==='baja')injuredSelected++;
+      else if(s==='duda')doubtSelected++;
+    });
+    // Each injured starter costs ~8% xG, each doubt ~4%
+    const penalty=injuredSelected*0.08+doubtSelected*0.04;
+    return Math.max(0.7,1-penalty);
+  };
+
+  const adjA=calcXgAdjust(nA,selA,'A');
+  const adjB=calcXgAdjust(nB,selB,'B');
+
+  // Apply to TD working copy
+  if(T[nA])T[nA].xgFor=+(TD_BASE[nA].xgFor*adjA).toFixed(3);
+  if(T[nB])T[nB].xgFor=+(TD_BASE[nB].xgFor*adjB).toFixed(3);
+
+  // Switch to predictor tab with these teams pre-selected
+  document.getElementById('sA').value=nA;
+  document.getElementById('sB').value=nB;
+  ST('pred');
+
+  // Show confirmation
+  setTimeout(()=>{
+    const status=document.getElementById('statusBox');
+    status.className='status on';
+    document.getElementById('statusTxt').textContent=
+      `✓ Titulares aplicados — ${nA} xG ajustado a ${T[nA]?.xgFor.toFixed(2)} · ${nB} xG ajustado a ${T[nB]?.xgFor.toFixed(2)} — Presiona Calcular`;
+  },300);
+}
+
 
 // ═══ INIT ═══
 function init(){
@@ -1508,25 +1652,28 @@ function init(){
   if(savedKey)setChip('odds','ok','✓ Odds API key guardada');
   else setChip('odds','err','Sin odds API key — usar odds manuales');
 
-  // Populate squad selector with openfootball names (sorted by group)
+  // Populate squad, linA, linB selectors — build HTML string directly to avoid optgroup cloning bug
   const squadSel=document.getElementById('squadTeamSel');
-  const linA=document.getElementById('linTeamA'),linB=document.getElementById('linTeamB');
-  linB.value='';
+  const linA=document.getElementById('linTeamA');
+  const linB=document.getElementById('linTeamB');
+  let squadHtml='', linAHtml='', linBHtml='';
   let lastSqGrp='';
   names.forEach(n=>{
     const t=TD_BASE[n];
-    // Squad selector uses our names
     if(t.grp!==lastSqGrp){
-      const og1=document.createElement('optgroup');og1.label=`Grupo ${t.grp}`;squadSel.appendChild(og1);
-      const og2=document.createElement('optgroup');og2.label=`Grupo ${t.grp}`;linA.appendChild(og2);
-      const og3=document.createElement('optgroup');og3.label=`Grupo ${t.grp}`;linB.appendChild(og3.cloneNode(true));
+      if(lastSqGrp){squadHtml+='</optgroup>';linAHtml+='</optgroup>';linBHtml+='</optgroup>';}
+      squadHtml+=`<optgroup label="Grupo ${t.grp}">`;
+      linAHtml+=`<optgroup label="Grupo ${t.grp}">`;
+      linBHtml+=`<optgroup label="Grupo ${t.grp}">`;
       lastSqGrp=t.grp;
     }
     const o=`<option value="${n}">${t.flag} ${n}</option>`;
-    squadSel.querySelectorAll('optgroup')[squadSel.querySelectorAll('optgroup').length-1].insertAdjacentHTML('beforeend',o);
-    linA.querySelectorAll('optgroup')[linA.querySelectorAll('optgroup').length-1].insertAdjacentHTML('beforeend',o);
-    linB.querySelectorAll('optgroup')[linB.querySelectorAll('optgroup').length-1].insertAdjacentHTML('beforeend',o);
+    squadHtml+=o; linAHtml+=o; linBHtml+=o;
   });
+  squadHtml+='</optgroup>'; linAHtml+='</optgroup>'; linBHtml+='</optgroup>';
+  squadSel.innerHTML=squadHtml;
+  linA.innerHTML=linAHtml;
+  linB.innerHTML=linBHtml;
   linB.value='Francia';
 
   // Check API-Football key
