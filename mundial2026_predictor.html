@@ -614,7 +614,7 @@ const TD_BASE={
 
 let T=JSON.parse(JSON.stringify(TD_BASE));
 let standings={};
-let liveMatches=[];
+let liveMatches=[{"home":"México","away":"Sudáfrica","gH":2,"gA":0,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Corea del Sur","away":"Czechia","gH":2,"gA":1,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Canadá","away":"Bosnia-Herzegovina","gH":1,"gA":1,"grp":"B","date":"2026-06-12","round":"Matchday 2"},{"home":"USA","away":"Paraguay","gH":4,"gA":1,"grp":"D","date":"2026-06-12","round":"Matchday 2"}];
 let oddsData={};
 let apiOk=false;
 
@@ -648,7 +648,7 @@ async function fetchResults(){
     applyResults();
     renderGroups();
     renderResultsList();
-    setChip('results','ok',`✓ ${liveMatches.length} partido(s) cargado(s)`);
+    setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jun 15:58 UTC`);
   }catch(e){
     initStandings();
     setChip('results','err','⚠ Sin datos en vivo — usando parámetros base');
