@@ -620,7 +620,7 @@ let apiOk=true;
 // ═══ DATOS EMBEBIDOS DIRECTAMENTE — sin fetch, carga instantánea ═══
 // ── ACTUALIZAR DIARIAMENTE: copiar resultados nuevos de openfootball ──
 // Última actualización: 2026-06-12
-let liveMatches=[{"home":"México","away":"Sudáfrica","gH":2,"gA":0,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Corea del Sur","away":"Czechia","gH":2,"gA":1,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Canadá","away":"Bosnia-Herzegovina","gH":1,"gA":1,"grp":"B","date":"2026-06-12","round":"Matchday 2"},{"home":"Qatar","away":"Suiza","gH":1,"gA":1,"grp":"B","date":"2026-06-13","round":"Matchday 3"},{"home":"Brasil","away":"Marruecos","gH":1,"gA":1,"grp":"C","date":"2026-06-13","round":"Matchday 3"},{"home":"Haití","away":"Escocia","gH":0,"gA":1,"grp":"C","date":"2026-06-13","round":"Matchday 3"},{"home":"USA","away":"Paraguay","gH":4,"gA":1,"grp":"D","date":"2026-06-12","round":"Matchday 2"},{"home":"Australia","away":"Turquía","gH":2,"gA":0,"grp":"D","date":"2026-06-13","round":"Matchday 3"},{"home":"Alemania","away":"Curazao","gH":7,"gA":1,"grp":"E","date":"2026-06-14","round":"Matchday 4"},{"home":"Costa de Marfil","away":"Ecuador","gH":1,"gA":0,"grp":"E","date":"2026-06-14","round":"Matchday 4"},{"home":"Países Bajos","away":"Japón","gH":2,"gA":2,"grp":"F","date":"2026-06-14","round":"Matchday 4"},{"home":"Suecia","away":"Túnez","gH":5,"gA":1,"grp":"F","date":"2026-06-14","round":"Matchday 4"},{"home":"Bélgica","away":"Egipto","gH":1,"gA":1,"grp":"G","date":"2026-06-15","round":"Matchday 5"},{"home":"España","away":"Cabo Verde","gH":0,"gA":0,"grp":"H","date":"2026-06-15","round":"Matchday 5"},{"home":"Arabia Saudita","away":"Uruguay","gH":1,"gA":1,"grp":"H","date":"2026-06-15","round":"Matchday 5"}];
+let liveMatches=[{"home":"México","away":"Sudáfrica","gH":2,"gA":0,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Corea del Sur","away":"Czechia","gH":2,"gA":1,"grp":"A","date":"2026-06-11","round":"Matchday 1"},{"home":"Canadá","away":"Bosnia-Herzegovina","gH":1,"gA":1,"grp":"B","date":"2026-06-12","round":"Matchday 2"},{"home":"Qatar","away":"Suiza","gH":1,"gA":1,"grp":"B","date":"2026-06-13","round":"Matchday 3"},{"home":"Brasil","away":"Marruecos","gH":1,"gA":1,"grp":"C","date":"2026-06-13","round":"Matchday 3"},{"home":"Haití","away":"Escocia","gH":0,"gA":1,"grp":"C","date":"2026-06-13","round":"Matchday 3"},{"home":"USA","away":"Paraguay","gH":4,"gA":1,"grp":"D","date":"2026-06-12","round":"Matchday 2"},{"home":"Australia","away":"Turquía","gH":2,"gA":0,"grp":"D","date":"2026-06-13","round":"Matchday 3"},{"home":"Alemania","away":"Curazao","gH":7,"gA":1,"grp":"E","date":"2026-06-14","round":"Matchday 4"},{"home":"Costa de Marfil","away":"Ecuador","gH":1,"gA":0,"grp":"E","date":"2026-06-14","round":"Matchday 4"},{"home":"Países Bajos","away":"Japón","gH":2,"gA":2,"grp":"F","date":"2026-06-14","round":"Matchday 4"},{"home":"Suecia","away":"Túnez","gH":5,"gA":1,"grp":"F","date":"2026-06-14","round":"Matchday 4"},{"home":"Bélgica","away":"Egipto","gH":1,"gA":1,"grp":"G","date":"2026-06-15","round":"Matchday 5"},{"home":"Irán","away":"Nueva Zelanda","gH":2,"gA":2,"grp":"G","date":"2026-06-15","round":"Matchday 5"},{"home":"España","away":"Cabo Verde","gH":0,"gA":0,"grp":"H","date":"2026-06-15","round":"Matchday 5"},{"home":"Arabia Saudita","away":"Uruguay","gH":1,"gA":1,"grp":"H","date":"2026-06-15","round":"Matchday 5"}];
 
 // Función vacía — datos ya embebidos, no necesita fetch
 // fetchResults is kept for the GitHub Actions workflow (update_data.py calls it indirectly)
@@ -629,7 +629,7 @@ async function fetchResults(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 16 Jun 00:29 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 16 Jun 06:29 UTC`);
 }
 
 const CORS_PROXIES=[
@@ -1535,7 +1535,7 @@ function init(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 16 Jun 00:29 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 16 Jun 06:29 UTC`);
 }
 try{ init(); } catch(e){ console.error('Init error:',e); document.getElementById('chip-results').innerHTML='<span style="color:var(--red)">⚠ Error: '+e.message+'</span>'; }
 </script>
