@@ -629,7 +629,7 @@ async function fetchResults(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jul 18:29 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jul 20:09 UTC`);
 }
 
 const CORS_PROXIES=[
@@ -1535,7 +1535,7 @@ function init(){
   applyResults();
   renderGroups();
   renderResultsList();
-  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jul 18:29 UTC`);
+  setChip('results','ok',`✓ ${liveMatches.length} partido(s) · 13 Jul 20:09 UTC`);
 }
 try{ init(); } catch(e){ console.error('Init error:',e); document.getElementById('chip-results').innerHTML='<span style="color:var(--red)">⚠ Error: '+e.message+'</span>'; }
 </script>
